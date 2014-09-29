@@ -47,9 +47,6 @@ echo htmlspecialchars($searchfilter, ENT_QUOTES);
 ?>
 ,百度搜索结果参数,F,F1,F2,F3" name="keywords" />
 <meta content="还你一个没有百度推广、产品的搜索结果页。" name="description" />
-<link rel="author" href="https://plus.google.com/109624994087248289296/posts" />
-
-<script src="http://www.weixingon.com/javascript/jquery.js"></script>
 
 <!--css-->
 
@@ -692,7 +689,7 @@ $search_res1 = preg_match_all("/(?<=F1':)(\s?)(')([0-9A-F]{1})([0-9A-F]{1})([0-9
 
 if (preg_match_all("/(?<=<div class\=\"result c\-container)( ?)(\" id\=\")(\d{1,3})(\" srcid\=\")(\d{1,5})(?=\" tpl\=\")/", @$baiduserp, $matchsrcid))
 
-// 搜索结果，长度，来源，排名
+// 搜索结果，字节，来源，排名
 
 if (!is_null($s))
 {
@@ -707,8 +704,8 @@ echo"
 					</a>
 				</th>
 				<th>
-					<a href=\"http://ask.seowhy.com/question/10425\" rel=\"external nofollow\" target=\"_blank\" title=\"通常标题长度 <= 64\">
-						长度
+					<a href=\"http://ask.seowhy.com/question/10425\" rel=\"external nofollow\" target=\"_blank\" title=\"搜索结果标题字节 <= 64\">
+						字节
 					</a>
 				</th>
 				<th>
@@ -724,10 +721,30 @@ echo"
 		</thead>
 		<tbody>";
 
+// 字数统计函数
+function smarty_modifier_wordcount($str,$encoding = 'UTF-8')
+{
+	if(strtolower($encoding) == 'gbk') {
+
+		$encoding = 'gb18030';
+	}
+	
+	if(!is_string($str)||$str === '') return false;
+	$mbLen = iconv_strlen($str, $encoding);
+	$subLen = 0;
+	for ($i = 0; $i < $mbLen; $i++) {
+		$mbChr = iconv_substr($str, $i, 1, $encoding);
+		if (1 == strlen($mbChr)) {
+			$subLen += 1;
+		} else {
+			$subLen += 2;
+		}
+	}
+	return $subLen;
+}
+
 	foreach ($matchsrcid[3] as $i => $position)
 	{
-		$titlecount = preg_replace('/[\x80-\xff]{1,3}/', ' ', stripslashes(htmlspecialchars_decode($matchserp[1][$i], ENT_QUOTES)), -1, $number);
-		$number += strlen($titlecount);
 		echo "
 			<tr class=\"back-white\">
 				<td>
@@ -735,7 +752,7 @@ echo"
 						.stripslashes($matchserp[1][$i])
 					."</a>
 				</td>
-				<td class=\"center\">".$number."</td>";
+				<td class=\"center\">".smarty_modifier_wordcount(stripslashes(htmlspecialchars_decode($matchserp[1][$i], ENT_QUOTES)))."</td>";
 		$resourceid = $matchsrcid[5][$i];
 		{
 		if ($resourceid == 1599)
@@ -7548,7 +7565,7 @@ echo"
 					<a href=\"http://www.baidu.com/s?tn=baidurt&amp;rtt=1&amp;bsst=1&amp;wd=".$queryfilter."\" rel=\"external nofollow\" target=\"_blank\">最新相关消息</a>
 				</td>
 				<td class=\"center\">
-					<a href=\"http://www.weixingon.com/baidusp-news.php?s=".$queryfilter."\" target=\"_blank\">".$queryfilter."</a>
+					<a href=\"http://www.weixingon.com/baidusp-news.php?s=".$queryfilter."\" target=\"_blank\">".htmlspecialchars_decode($s)."</a>
 				</td>
 				<td class=\"center\">
 					".$matchsp[3][$i]."
@@ -10159,7 +10176,7 @@ echo"
 
 // 知心搜索
 
-if (preg_match_all("/(?<=data\-click\=\"{'rsv_re_ename':')([\x80-\xff\w\s\.]+)(?='}\">)/", @$baiduserp, $matchename))
+if (preg_match_all("/(?<=data\-click\=\"{'rsv_re_ename':')([\x80-\xff\w\s\.]+)(?=','rsv_re_uri':')/", @$baiduserp, $matchename))
 
 if (!is_null($s))
 {
@@ -10169,23 +10186,21 @@ echo "
 		<thead>
 			<tr>
 				<th>知心搜索相关名&nbsp;ename</th>
-				<th>排序</th>
 			</tr>
 		</thead>
-		<tbody>";
+		<tbody>
+			<tr class=\"back-gold\">
+				<td>";
 
 	// 百度网址采用百度极速搜索模式
 	foreach ($matchename[1] as $i => $position)
 	{
 		echo "
-			<tr class=\"back-gold\">
-				<td>
-					<a href=\"http://127.0.0.1/baidu-f.php?s=".$matchename[1][$i]."\" target=\"_blank\">".$matchename[1][$i]."</a>
-				</td>
-				<td class=\"center\">".($i+1)."</td>
-			</tr>";
+					<a href=\"http://127.0.0.1/baidu-f.php?s=".$matchename[1][$i]."\" target=\"_blank\">".$matchename[1][$i]."</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
 	}
 	echo "
+				</td>
+			</tr>
 		</tbody>
 	</table>
 </div>";
@@ -10200,6 +10215,7 @@ echo"
 	<a class=\"noa\" href=\"http://www.weixingon.com/baidusp-lm.php?s=".$queryfilter.$connectpn.$pn.$connectrn."100".$connectlm."7\"  target=\"_blank\">百度快照更新时间限制工具</a>
 	<a class=\"noa\" href=\"http://www.weixingon.com/baidusp-hot.php?s=".$queryfilter."\" target=\"_blank\">百度相关热门词</a>
 	<a class=\"noa\" href=\"http://www.weixingon.com/baidusp-srcid.php\" target=\"_blank\">百度搜索产品资源</a>
+	<a class=\"noa\" href=\"http://pan.baidu.com/s/1i3yyWfF\" target=\"_blank\" rel=\"external nofollow\">百度参数分析工具v1.07</a>
 </p>
 ";
 }
@@ -10208,7 +10224,7 @@ echo "<p class=\"white\">本次查询耗时&nbsp;".sprintf("%.2f",($costTime*100
 ?>
 </div>
 <script charset="gbk" src="http://www.baidu.com/js/opensug.js"></script>
-<script src="http://www.weixingon.com/javascript/go-top.js"></script>
+<script src="http://www.weixingon.com/javascript/j.js"></script>
 <script>(new GoTop()).init({pageWidth:1022,nodeId:'go-top',nodeWidth:100,distanceToBottom:200,distanceToPage:0,hideRegionHeight:130,text:'回到顶部'})
 // 拖放功能
 var $ = function(selector) {
